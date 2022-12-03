@@ -2,8 +2,10 @@ if apm.bob_rework.lib == nil then apm.bob_rework.lib = {} end
 if apm.bob_rework.lib.override == nil then apm.bob_rework.lib.override = {} end
 if apm.bob_rework.lib.override.list == nil then apm.bob_rework.lib.override.list = {} end
 
-require('lib.enities.base')
-require('lib.tier.base')
+local e = require('lib.entities.buildings.energy')
+local tier = require('lib.tier.base')
+local plate = require('lib.entities.plates')
+local alloy = require('lib.entities.alloys')
 
 local buildAccum = function (fast, high, slow, tier)
     local recipe = fast
@@ -36,12 +38,9 @@ local buildAccum = function (fast, high, slow, tier)
 end
 
 apm.bob_rework.lib.override.accums = function ()
-    buildAccum('fast-accumulator', 'large-accumulator', 'slow-accumulator', apm.bob_rework.lib.tier.brass)
-    buildAccum('fast-accumulator-2', 'large-accumulator-2', 'slow-accumulator-2', apm.bob_rework.lib.tier.steel)
-    buildAccum('fast-accumulator-3', 'large-accumulator-3', 'slow-accumulator-3', apm.bob_rework.lib.tier.titanium)
+    buildAccum(e.accum.fast.basic, e.accum.high.basic, e.accum.slow.basic, tier.yellow)
+    buildAccum(e.accum.fast.advance, e.accum.high.advance, e.accum.slow.advance, tier.red)
 
-    local recipe = 'accumulator'
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.iron, 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.brass, 2)
-
+    apm.lib.utils.recipe.ingredient.mod(e.accum.basic, plate.iron, 0)
+    apm.lib.utils.recipe.ingredient.mod(e.accum.basic, alloy.brass, 2)
 end

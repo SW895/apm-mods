@@ -2,19 +2,27 @@ if apm.bob_rework.lib == nil then apm.bob_rework.lib = {} end
 if apm.bob_rework.lib.override == nil then apm.bob_rework.lib.override = {} end
 if apm.bob_rework.lib.override.list == nil then apm.bob_rework.lib.override.list = {} end
 
-require('lib.enities.base')
-require('lib.tier.base')
+local miner = require('lib.entities.buildings.miners')
+local t = require('lib.tier.base')
+local p = require('lib.entities.product')
 
-local buildMiningRecipe = function (recipe, tier)
+local buildMiningRecipe = function(recipe, tier)
     apm.lib.utils.recipe.ingredient.remove_all(recipe)
 
+    if tier.frame then
+        apm.lib.utils.recipe.ingredient.mod(recipe, tier.frame, tier.level*2)
+    end
+
     apm.lib.utils.recipe.ingredient.mod(recipe, tier.engineUnit, 2 + tier.level)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 8 + 2*tier.level)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 14 + 4*tier.level)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 12 + 3*tier.level)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 12 + 3*tier.level)
-    if tier.level > 1 then 
-        apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.ironStick, 8 + 3*tier.level)
+    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 8 + 2 * tier.level)
+    if tier.extraLogic then
+        apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 8 + 2 * tier.level)
+    end
+    apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 14 + 4 * tier.level)
+    apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 12 + 3 * tier.level)
+    apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 12 + 3 * tier.level)
+    if tier.level > 1 then
+        apm.lib.utils.recipe.ingredient.mod(recipe, p.stick, 8 + 3 * tier.level)
     end
     if tier.level < 1 then
         apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 0)
@@ -25,42 +33,33 @@ local buildMiningRecipe = function (recipe, tier)
     end
 end
 
-local buildMiningAdvancedRecipe = function (recipe, base, tier)
-    apm.lib.utils.recipe.ingredient.remove_all(recipe)
 
-    apm.lib.utils.recipe.ingredient.mod(recipe, base, 1)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.engineUnit, 2)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 2)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 5)
+local buff = function(name, ms, r)
+    local miner = data.raw['mining-drill'][name]
+    --NOTE: This is 2.49 for electric mining drills (a 5x5 area) and 0.99 for burner mining drills (a 2x2 area).
+    --      The drill searches resource outside its natural boundary box, which is 0.01 (the middle of the entity); making it 2.5 and 1.0 gives it another block radius.
+    if miner then
+        miner.mining_speed = ms
+        miner.resource_searching_radius = r
+    end
 end
 
-local buildYellowMiner = function ()
-    local recipe, tier = apm.bob_rework.lib.entities.electricMiner_t2, apm.bob_rework.lib.tier.brass
-    local engine = apm.bob_rework.lib.entities.electricEngineUnit
-    local logic = apm.bob_rework.lib.entities.logicContact
+apm.bob_rework.lib.override.mining = function()
+    buildMiningRecipe(miner.burner.basic, t.gray)
+    buildMiningRecipe(miner.steam, t.steam)
+    buildMiningRecipe(miner.basic, t.yellow)
+    buildMiningRecipe(miner.red, t.red)
+    buildMiningRecipe(miner.blue, t.blue)
 
-    apm.lib.utils.recipe.ingredient.remove_all(recipe)
+    buff(miner.burner.basic, 0.6, 1.99) -- 4x4
+    buff(miner.steam, 1, 2.49) -- 5x5
+    buff(miner.basic, 1.2, 2.49)
+    buff(miner.red, 2, 3.49)
+    buff(miner.blue, 4, 4.49)
 
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.ironStick, 8)
-    apm.lib.utils.recipe.ingredient.mod(recipe, engine, 2 + tier.level)
-    apm.lib.utils.recipe.ingredient.mod(recipe, logic, 10)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 16)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 15)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 15)
-end
-
-apm.bob_rework.lib.override.mining = function ()
-    buildMiningRecipe(apm.bob_rework.lib.entities.burnerMiner, apm.bob_rework.lib.tier.bronze)
-    buildMiningAdvancedRecipe(apm.bob_rework.lib.entities.improvedBurnerMiner, apm.bob_rework.lib.entities.burnerMiner, apm.bob_rework.lib.tier.bronze)
-   
-    buildMiningRecipe(apm.bob_rework.lib.entities.steamMiner, apm.bob_rework.lib.tier.brass)
-    
-    -- buildMiningRecipe(apm.bob_rework.lib.entities.electricMiner_t2, apm.bob_rework.lib.tier.brass)
-    buildYellowMiner()
-    buildMiningRecipe(apm.bob_rework.lib.entities.advancedElectricMiner_t2, apm.bob_rework.lib.tier.monel)
-    -- buildMiningAdvancedRecipe(apm.bob_rework.lib.entities.advancedElectricMiner_t2, apm.bob_rework.lib.entities.electricMiner_t2, apm.bob_rework.lib.tier.monel)
-
-    buildMiningRecipe(apm.bob_rework.lib.entities.electricMiner_t3, apm.bob_rework.lib.tier.steel)
-    buildMiningRecipe(apm.bob_rework.lib.entities.electricMiner_t4, apm.bob_rework.lib.tier.aluminium)
-    buildMiningRecipe(apm.bob_rework.lib.entities.electricMiner_t5, apm.bob_rework.lib.tier.titanium)
+    local item = data.raw['mining-drill'][miner.basic]
+    if item then
+        item.next_upgrade = miner.red
+        item.fast_replaceable_group = "electric-mining-drill"
+    end
 end

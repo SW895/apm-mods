@@ -51,9 +51,13 @@ require('lib.override.others')
 require('lib.override.buff')
 require('lib.override.eboiler')
 require('lib.override.power')
+require('lib.override.beacon')
+require('lib.override.grid')
+require('lib.override.plates')
+require('lib.override.titaniumAlloy')
+require('lib.override.frames')
 
 apm.bob_rework.lib.override.apply = function ()
-    apm.bob_rework.lib.override.drop()
     apm.bob_rework.lib.override.crushers()
     apm.bob_rework.lib.override.simpleEngines()
     apm.bob_rework.lib.override.inserters()
@@ -85,11 +89,18 @@ apm.bob_rework.lib.override.apply = function ()
     apm.bob_rework.lib.override.burnerReactors()
     apm.bob_rework.lib.override.furnaces()
     apm.bob_rework.lib.override.eboiler()
+    apm.bob_rework.lib.override.beacon()
+    apm.bob_rework.lib.override.plate()
+    apm.bob_rework.lib.override.frames()
 
     apm.bob_rework.lib.override.others()
     apm.bob_rework.lib.override.power()
     apm.bob_rework.lib.override.buff()
     apm.bob_rework.lib.override.combat()
+
+    apm.bob_rework.lib.override.grid()
+
+    apm.bob_rework.lib.override.drop()
 
     apm.bob_rework.lib.override.tech()
 end

@@ -1,20 +1,38 @@
+local combat    = require "lib.entities.combat"
+local alloys    = require "lib.entities.alloys"
+local plates    = require "lib.entities.plates"
+local materials = require "lib.entities.materials"
+local product   = require "lib.entities.product"
+local gems      = require "lib.entities.gems"
+local wires     = require "lib.entities.wires"
+local logic     = require "lib.entities.logic"
+local pipes     = require "lib.entities.pipes"
+local pumps     = require "lib.entities.pumps"
+local energy    = require "lib.entities.buildings.energy"
+local modules   = require "lib.entities.modules"
+local chemistry = require "lib.entities.buildings.chemistry"
 if apm.bob_rework.lib == nil then apm.bob_rework.lib = {} end
 if apm.bob_rework.lib.override == nil then apm.bob_rework.lib.override = {} end
 if apm.bob_rework.lib.override.list == nil then apm.bob_rework.lib.override.list = {} end
 
-require('lib.enities.base')
-require('lib.tier.base')
+--TODO: rework
+
+require('lib.entities.base')
+local t = require('lib.tier.base')
 require('lib.utils.debug')
 
-local buffStackSizeForArtillery = function (name)
+local plate = require('lib.entities.plates')
+local alloy = require('lib.entities.alloys')
+
+local buffStackSizeForArtillery = function(name)
 	local item = data.raw.ammo[name]
 	if item then
 		item.stack_size = 20
 	end
 end
 
-local drop = function ()
-    local rm = apm.lib.utils.recipe.remove
+local drop = function()
+	local rm = apm.lib.utils.recipe.remove
 
 	rm('bio-magazine-ammo-rampant-arsenal')
 	rm('he-magazine-ammo-rampant-arsenal')
@@ -71,105 +89,111 @@ local drop = function ()
 	rm('vehicle-big-turret-6')
 end
 
-local buildLaserTurret = function ()
-    local recipe = 'laser-turret'
-    apm.lib.utils.recipe.ingredient.mod(recipe, 'ruby-5', 1)
-    local prev = recipe
-    recipe = 'bob-laser-turret-2'
-    apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.battery, 12)
-    prev = recipe
-    recipe = 'bob-laser-turret-3'
-    apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.logicAdvanced, 25)
-    prev = recipe
-    recipe = 'bob-laser-turret-4'
-    apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-    prev = recipe
-    recipe = 'bob-laser-turret-5'
-    apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tungstenCarbide, 20)
+local buildLaserTurret = function()
+	local recipe = combat.turret.laser.basic
+	local tier = t.red
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraConstructionAlloy, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, gems.ruby.polished, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 10)
 
-    local recipe = 'advanced-laser-item-rampant-arsenal'
-    local tier = apm.bob_rework.lib.tier.titanium
+	recipe = combat.turret.laser.advance
+	tier = t.blue
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraConstructionAlloy, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, gems.sapphire.polished, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 20)
+
+	recipe = combat.turret.laser.extra
+	tier = apm.bob_rework.lib.tier.blue
 
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 50)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraConstructionAlloy, 60)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.electricEngineUnit, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 50)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 50)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'diamond-5', 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'large-accumulator-3', 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, gems.diamond.polished, 25)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 200)
 end
 
-local buildShotgunTurret = function ()
-    local recipe = 'shotgun-item-rampant-arsenal'
-    apm.lib.utils.recipe.ingredient.remove_all(recipe)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.brassBearing, 10)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.brassGearWheel, 10)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.brass.constructionAlloy, 15)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.brass.logic, 5)
+local buildShotgunTurret = function()
+	local recipe = combat.turret.shotgun
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.bearing.brass, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.brass, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.steam.constructionAlloy, 15)
 end
 
-local buildCanonTurret = function ()
-    local recipe = 'cannon-item-rampant-arsenal'
-    local tier = apm.bob_rework.lib.tier.steel
+local buildCanonTurret = function()
+	local recipe = combat.turret.cannon.basic
+	local tier = t.red
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 50)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 100)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.engineUnit, 20)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.basic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 10)
 
-	local recipe = 'rapid-cannon-item-rampant-arsenal'
-    local tier = apm.bob_rework.lib.tier.titanium
+	recipe = combat.turret.cannon.rapid
+	tier = t.blue
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 50)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 100)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.engineUnit, 25)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.basic, 25)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 30)
 end
 
-local buildRocketTurret = function ()
-    local recipe = 'rocket-item-rampant-arsenal'
-    local tier = apm.bob_rework.lib.tier.steel
+local buildRocketTurret = function()
+	local recipe = combat.turret.rocket.basic
+	local tier = t.red
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 30)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 20)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 15)
-    
-    local recipe = 'rapid-rocket-item-rampant-arsenal'
-    local tier = apm.bob_rework.lib.tier.titanium
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.basic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 15)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 15)
+
+	local recipe = combat.turret.rocket.rapid
+	local tier = t.blue
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 40)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 20)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.engineUnit, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.basic, 30)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 30)
 end
 
-local genArtillery = function (recipe, tier)
+local genArtillery = function(recipe, tier)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-    apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 100)
-    if tier.extraConstructionAlloy then
-        apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraConstructionAlloy, 50)
-    end
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 100)
+	if tier.extraConstructionAlloy then
+		apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraConstructionAlloy, 50)
+	end
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 30)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 30)
-	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 50*tier.level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.engineUnit, 20 + 20*tier.level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 50 * tier.level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.basic, 20 + 20 * tier.level)
 end
 
-local buildArtillery = function ()
-    genArtillery('artillery-turret', apm.bob_rework.lib.tier.steel)
-    genArtillery('bob-artillery-turret-2', apm.bob_rework.lib.tier.aluminium)
-    genArtillery('bob-artillery-turret-3', apm.bob_rework.lib.tier.titanium)
+local buildArtillery = function()
+	genArtillery(combat.artillery.light, t.red)
+	genArtillery(combat.artillery.basic, t.blue)
 end
 
 local buildGunTurret = function(recipe, tier, extraGlass)
@@ -184,19 +208,53 @@ local buildGunTurret = function(recipe, tier, extraGlass)
 	end
 end
 
-local buildGunTurrets = function ()
-    buildGunTurret('gun-turret', apm.bob_rework.lib.tier.bronze, false)
-    buildGunTurret('bob-gun-turret-2', apm.bob_rework.lib.tier.brass, false)
-    buildGunTurret('bob-gun-turret-3', apm.bob_rework.lib.tier.monel, false)
-    buildGunTurret('bob-gun-turret-4', apm.bob_rework.lib.tier.steel, false)
-    buildGunTurret('bob-gun-turret-5', apm.bob_rework.lib.tier.aluminium, false)
+local buildGunTurrets = function()
+	buildGunTurret(combat.turret.gun.basic, t.gray, false)
+	buildGunTurret(combat.turret.gun.advance, t.yellow, false)
 
-    buildGunTurret('bob-sniper-turret-1', apm.bob_rework.lib.tier.brass, true)
-    buildGunTurret('bob-sniper-turret-2', apm.bob_rework.lib.tier.monel, true)
-    buildGunTurret('bob-sniper-turret-3', apm.bob_rework.lib.tier.steel, true)
+	buildGunTurret(combat.turret.gun.sniper, t.yellow, true)
 end
 
-local buildSolarPanel = function (recipe, tier, shell, conduct)
+local buildFlameTurrets = function ()
+	local recipe = 'acid-cannon-rampant-arsenal'
+	local tier = t.red
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pump, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 20)
+
+	local recipe = 'flamethrower-turret'
+	local tier = t.red
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pump, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 20)
+
+	local recipe = 'suppression-cannon-item-rampant-arsenal'
+	local tier = t.blue
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 40)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pipe, 40)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.pump, 40)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.basement, 60)
+end
+
+local buildSolarPanel = function(recipe, tier, shell, conduct)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 2)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 5)
@@ -208,96 +266,85 @@ local buildSolarPanel = function (recipe, tier, shell, conduct)
 	end
 end
 
-local buildEqBurnerGen = function ()
-	local recipe = 'apm_equipment_burner_generator_basic'
+local buildEqBurnerGen = function()
+	local recipe = combat.equip.generator.burner.basic
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.electricGeneratorUnit, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.engineUnit, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.monel.logic, 8)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.monel.wire, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.burner, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.egenerator, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.yellow.logic, 8)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.wire, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
 
-	local recipe = 'apm_equipment_burner_generator_advanced'
+	local recipe = combat.equip.generator.burner.advance
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.electricGeneratorUnit, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_equipment_burner_generator_basic', 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.monel.wire, 6)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.egenerator, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, combat.equip.generator.burner.basic, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.yellow.wire, 6)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
 end
 
-local buildFusionReactorEq = function (recipe, level)
+local buildFusionReactorEq = function(recipe, level)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 30+20*level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.logicProcessing, 100 + 50*level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.logicAPU, 100 + 50*level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lowDS, 30 + 20*level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_depleted_uranium_ingots', 10 + 5*level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.lead, 30 + 20 * level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, logic.PU, 100 + 50 * level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, logic.APU, 100 + 50 * level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.lowDensityStructure, 30 + 20 * level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_depleted_uranium_ingots', 10 + 5 * level)
 end
 
-local buildEqReactors = function ()
-	buildFusionReactorEq('fusion-reactor-equipment', 1)
-	buildFusionReactorEq('fusion-reactor-equipment-2', 2)
-	buildFusionReactorEq('fusion-reactor-equipment-3', 3)
-	buildFusionReactorEq('fusion-reactor-equipment-4', 4)
-	local recipe = 'nuclear-generator-rampant-arsenal'
+local buildEqReactors = function()
+	buildFusionReactorEq(combat.equip.generator.nuclear.basic, 1)
+	local recipe = combat.equip.generator.nuclear.advance
 	buildFusionReactorEq(recipe, 5)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_depleted_uranium_ingots', 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 50)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.heatPipe_t3, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.titanium, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, energy.heat.pipe.extra, 20)
 end
 
-local buildPersonalLaser = function (recipe, tier, optics)
+local buildPersonalLaser = function(recipe, tier, optics)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 10)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 5)
+	if tier.extraLogic then
+		apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 5)
+	end
 	apm.lib.utils.recipe.ingredient.mod(recipe, optics, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 10)
 end
 
-local buildExoskeleton = function (recipe, tier)
+local buildExoskeleton = function(recipe, tier)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 20)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.electricEngineUnit, 5*tier.level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 5 * tier.level)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 30)
+	if tier.extraLogic then
+		apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 30)
+	end
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.gearWheel, 30)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.bearing, 30)
 end
 
-local buildPersonalRoboport = function (recipe, level)
-	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	local antenna = 'roboport-antenna-' .. tostring(level)
-	local hatch = 'roboport-door-' .. tostring(level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, antenna, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, hatch, 1)
-end
-
-local buildPersonalChargePad = function (recipe, level)
-	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	local pad = 'roboport-chargepad-' .. tostring(level)
-	apm.lib.utils.recipe.ingredient.mod(recipe, pad, 2)
-end
-
-local buildPersonalRoboportsControl = function ()
+local buildPersonalRoboportsControl = function()
 	local recipe = 'personal-roboport-robot-equipment-2'
 	local prev = 'personal-roboport-robot-equipment'
 	apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'module-case', 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, modules.case, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 5)
 
 	prev = recipe
 	recipe = 'personal-roboport-robot-equipment-3'
 	apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'module-case', 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, modules.case, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 5)
 
 	prev = recipe
 	recipe = 'personal-roboport-robot-equipment-4'
 	apm.lib.utils.recipe.ingredient.mod(recipe, prev, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'module-case', 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, modules.case, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 5)
 end
 
-local buildPersonalRoboport = function (recipe, tier, level)
+local buildPersonalRoboport = function(recipe, tier, level)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 5)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 5)
@@ -309,7 +356,7 @@ local buildPersonalRoboport = function (recipe, tier, level)
 	apm.lib.utils.recipe.ingredient.mod(recipe, pad, 2)
 end
 
-local buildNightvision = function (recipe, tier, optics)
+local buildNightvision = function(recipe, tier, optics)
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 10)
 	apm.lib.utils.recipe.ingredient.mod(recipe, optics, 2)
@@ -317,27 +364,90 @@ local buildNightvision = function (recipe, tier, optics)
 	apm.lib.utils.recipe.ingredient.mod(recipe, tier.wire, 5)
 end
 
-local changeIron2GM = function (recipe, count)
+local changeIron2GM = function(recipe, count)
 	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.iron, 0)
 	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, count)
 end
 
-local updateWeapons = function ()
-	local recipe = 'pistol'
+local updateWeapons = function()
+	local recipe = combat.gun.pistol
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tin, 6)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.tin, 6)
 
-	local recipe = 'submachine-gun'
+	recipe = combat.gun.submachine
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tin, 12)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.wood, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.ironGearWheel, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.bronze, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.bronze, 6)
 
-	local recipe = 'shotgun'
+	recipe = combat.gun.minigun
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tin, 12)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.wood, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.ironGearWheel, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.bronze, 6)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.bearing.bronze, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.bronze, 4)
+
+	recipe = combat.gun.shotgun.basic
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 12)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.iron, 10)
+
+	recipe = combat.gun.shotgun.combat
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 6)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 6)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.steel, 8)
+
+	recipe = combat.gun.rifle.basic
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 14)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.iron, 6)
+
+	recipe = combat.gun.rifle.sniper
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.glass, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.steel, 2)
+
+	recipe = combat.gun.rifle.laser
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, gems.diamond, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, gems.ruby, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, wires.unsulated, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, logic.PU, 20)
+
+	recipe = combat.gun.launcher.rocket.basic
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 10)
+
+	recipe = combat.gun.launcher.rocket.advance
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.invar, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, logic.circuit.advanced, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.aluminium, 2)
+
+	recipe = combat.gun.flamethrower
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pipes.base.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.cobalt.steel, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.cobaltSteel, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pumps.red, 1)
+
+	recipe = combat.gun.mortar
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pipes.base.steel, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.cobalt.steel, 4)
 end
 
 local changeRange = function(type, name, radius)
@@ -351,144 +461,126 @@ local changeRange = function(type, name, radius)
 	end
 end
 
-local modify = function ()
-	local recipe = 'cordite'
+local buildBattery = function (recipe, tier)
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.constructionAlloy, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.battery, 5*tier.level)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.wire, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, tier.logic, 5)
+	if tier.extraLogic then
+		apm.lib.utils.recipe.ingredient.mod(recipe, tier.extraLogic, 5)
+	end
+end
+
+local modify = function()
+	local recipe = product.chemistry.cordite
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'gun-cotton', 6)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'nitroglycerin', 30)
 	apm.lib.utils.recipe.result.mod(recipe, recipe, 10)
 
-    local recipe = 'piercing-rounds-magazine'
+	local recipe = 'piercing-rounds-magazine'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.copper, 3)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 5)
-    apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunPowder, 5)
-    
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.copper, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.lead, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 5)
+
 	local recipe = 'firearm-magazine'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunPowder, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.lead, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 5)
 
-    local recipe = 'apm_ammonium_sulfate_chem'
-    apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_coal_saturated_wastewater', 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, 'ammonia', 15)
+	local recipe = 'apm_ammonium_sulfate_chem'
+	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_coal_saturated_wastewater', 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, 'ammonia', 15)
 
 	local recipe = 'shotgun-shell'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.copper, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunPowder, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.copper, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 5)
 	local recipe = 'piercing-shotgun-shell'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.copper, 3)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 5)
-    apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_gun_powder', 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.copper, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.lead, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 5)
 
 	local recipe = 'artillery-shell'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tungsten, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.cordite, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.tungsten, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.chemistry.cordite, 50)
 	local recipe = 'cannon-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.cordite, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.explosives, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.chemistry.cordite, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.explosives, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 4)
 
 	local recipe = 'explosive-cannon-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.cordite, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.explosives, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 4)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.chemistry.cordite, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.explosives, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 4)
 
-    local recipe = 'nuclear-generator-rampant-arsenal'
+	local recipe = combat.equip.generator.nuclear.advance
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'fusion-reactor-equipment-2', 0)
-    apm.lib.utils.recipe.ingredient.mod(recipe, 'nuclear-reactor', 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, 'nuclear-reactor', 1)
 
 	local recipe = 'capsule-item-rampant-arsenal'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steelBearing, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steelGearWheel, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.concrete, 40)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.explosives, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.bearing.steel, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gearwheel.steel, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.concrete, 40)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.explosives, 0)
 
 	local recipe = 'mech-leg-segment'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titaniumPipe, 10)
-
-	local recipe = 'vehicle-solar-panel-5'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-	local recipe = 'vehicle-solar-panel-6'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-
-	local recipe = 'vehicle-fusion-reactor-1'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 50)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 50)
-	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_depleted_uranium_ingots', 10)
-
-	local recipe = 'vehicle-big-turret-5'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 20)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-	local recipe = 'vehicle-big-turret-6'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 20)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-
-	local recipe = 'vehicle-laser-defense-5'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-	local recipe = 'vehicle-laser-defense-6'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
-
-	local recipe = 'vehicle-roboport-4'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.titanium, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.nitinol, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.titanium, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pipes.base.titaniumAlloy, 10)
 
 	local recipe = 'firearm-magazine'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.lead, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.lead, 5)
 
 	local recipe = 'cannon-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloy.gunmetal, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 2)
 
 	local recipe = 'explosive-cannon-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
 
 	local recipe = 'scatter-cannon-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.cordite, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.chemistry.cordite, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
 
 	local recipe = 'artillery-shell'
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tungsten, 15)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 0)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.tungsten, 15)
 
 	local recipe = 'atomic-bomb'
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'rocket-body', 1)
 
 	local recipe = 'grenade'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.iron, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunPowder, 40)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.iron, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 40)
 
 	local recipe = 'rifle-item-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.bronze, 10)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.tin, 15)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.wood, 5)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.tier.bronze.logic, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.bronze, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.tin, 15)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.wood, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.gray.logic, 2)
 
 	local rbody = 'rocket-body'
 	local rhead = 'rocket-warhead'
 	local recipe = 'rocket'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, rbody, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, rhead, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pipes.base.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.explosives, 10)
 	local recipe = 'explosive-rocket'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.ingredient.mod(recipe, rbody, 1)
@@ -517,11 +609,11 @@ local modify = function ()
 
 	local recipe = 'mortar-gun-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'explosives', 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steelPipe, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, pipes.base.steel, 1)
 
 	local recipe = 'grenade-capsule-ammo-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'explosives', 0)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunPowder, 20)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.gun.powder, 20)
 
 	local recipe = 'he-artillery-ammo-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'cluster-grenade', 0)
@@ -529,48 +621,80 @@ local modify = function ()
 
 	local recipe = 'poison-capsule'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.iron, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.iron, 2)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'apm_creosote', 20)
 	apm.lib.utils.recipe.category.change(recipe, 'crafting-with-fluid')
 
 	local recipe = 'toxic-capsule-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.category.change(recipe, 'crafting-with-fluid')
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 3)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 1)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'chlorine', 20)
 
 	local recipe = 'poison-bullet-projectile'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.category.change(recipe, 'crafting-with-fluid')
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.copper, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.copper, 1)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'chlorine', 5)
 
 	local recipe = 'paralysis-capsule-rampant-arsenal'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.category.change(recipe, 'crafting-with-fluid')
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 3)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.gunMetal, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.gunmetal, 3)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'ammonia', 20)
 
 	local recipe = 'fire-capsule'
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'electronic-circuit', 0)
 	local recipe = 'slowdown-capsule'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.iron, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.resin, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.iron, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.chemistry.resin, 5)
 
 	local recipe = 'cluster-grenade'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 2)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.explosives, 5)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.explosives, 5)
 
 	local recipe = 'poison-rocket-warhead'
 	apm.lib.utils.recipe.ingredient.remove_all(recipe)
 	apm.lib.utils.recipe.category.change(recipe, 'crafting-with-fluid')
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.steel, 1)
-	apm.lib.utils.recipe.ingredient.mod(recipe, apm.bob_rework.lib.entities.plastic, 3)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 1)
+	apm.lib.utils.recipe.ingredient.mod(recipe, materials.plastic, 3)
 	apm.lib.utils.recipe.ingredient.mod(recipe, 'chlorine', 20)
+
+	local recipe = combat.equip.generator.transmitter.battery
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, plates.steel, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, wires.tinned, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.yellow.logic, 15)
+
+	local recipe = combat.armor.power.extra
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, alloys.lowDensityStructure, 150)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.blue.logic, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.blue.extraLogic, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.blue.wire, 50)
+
+	local recipe = combat.armor.power.advance
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.red.constructionAlloy, 50)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.red.logic, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, product.engine.electric, 30)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.red.wire, 30)
+
+
+	buildBattery(combat.equip.battery.I, t.yellow)
+	local recipe = combat.equip.battery.II
+	apm.lib.utils.recipe.ingredient.remove_all(recipe)
+	apm.lib.utils.recipe.ingredient.mod(recipe, combat.equip.battery.I, 2)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.yellow.logic, 10)
+	apm.lib.utils.recipe.ingredient.mod(recipe, t.wire, 10)
+
+	buildBattery(combat.equip.battery.III, t.red)
+	buildBattery(combat.equip.battery.IV, t.blue)
 
 	local ammoTurretType = 'ammo-turret'
 	local gunType = 'gun'
@@ -626,7 +750,7 @@ local modify = function ()
 	}
 	for _, shell in ipairs(shells) do
 		local ammo = data.raw.ammo[shell]
-	
+
 		if ammo and ammo.ammo_type and ammo.ammo_type.action and ammo.ammo_type.action.action_delivery then
 			ammo.ammo_type.action.action_delivery.max_range = 60
 		end
@@ -639,7 +763,7 @@ local modify = function ()
 			end
 		end
 	end
-	
+
 
 
 	changeIron2GM('grenade-capsule-ammo-rampant-arsenal', 2)
@@ -665,51 +789,33 @@ local modify = function ()
 	changeIron2GM('toxic-capsule-rampant-arsenal', 1)
 	changeIron2GM('paralysis-capsule-rampant-arsenal', 3)
 
-    buildLaserTurret()
-    buildShotgunTurret()
-    buildCanonTurret()
-    buildRocketTurret()
-    buildArtillery()
+	buildLaserTurret()
+	buildShotgunTurret()
+	buildCanonTurret()
+	buildRocketTurret()
+	buildArtillery()
 	buildGunTurrets()
+	buildFlameTurrets()
 	--
-	buildSolarPanel('solar-panel-equipment', apm.bob_rework.lib.tier.monel, apm.bob_rework.lib.entities.glass, apm.bob_rework.lib.entities.copper)
-	buildSolarPanel('solar-panel-equipment-2', apm.bob_rework.lib.tier.steel, apm.bob_rework.lib.entities.glass, apm.bob_rework.lib.entities.silver)
-	buildSolarPanel('solar-panel-equipment-3', apm.bob_rework.lib.tier.aluminium, apm.bob_rework.lib.entities.siliconWafer, apm.bob_rework.lib.entities.gold)
-	buildSolarPanel('solar-panel-equipment-4', apm.bob_rework.lib.tier.titanium, apm.bob_rework.lib.entities.siliconWafer, apm.bob_rework.lib.entities.gold)
+	buildSolarPanel('solar-panel-equipment', apm.bob_rework.lib.tier.red, apm.bob_rework.lib.entities.glass,
+		apm.bob_rework.lib.entities.silver)
+	buildSolarPanel('solar-panel-equipment-2', apm.bob_rework.lib.tier.blue, apm.bob_rework.lib.entities.siliconWafer,
+		apm.bob_rework.lib.entities.gold)
 	--
 	buildEqBurnerGen()
 	buildEqReactors()
 	buildPersonalRoboportsControl()
 	--
-	buildPersonalLaser('personal-laser-defense-equipment', apm.bob_rework.lib.tier.monel, apm.bob_rework.lib.entities.glass)
-	buildPersonalLaser('personal-laser-defense-equipment-2', apm.bob_rework.lib.tier.monel, 'ruby-5')
-	buildPersonalLaser('personal-laser-defense-equipment-3', apm.bob_rework.lib.tier.steel, 'emerald-5')
-	buildPersonalLaser('personal-laser-defense-equipment-4', apm.bob_rework.lib.tier.aluminium, 'amethyst-5')
-	buildPersonalLaser('personal-laser-defense-equipment-5', apm.bob_rework.lib.tier.aluminium, 'topaz-5')
-	buildPersonalLaser('personal-laser-defense-equipment-6', apm.bob_rework.lib.tier.titanium, 'diamond-5')
+	buildPersonalLaser('personal-laser-defense-equipment', apm.bob_rework.lib.tier.red, 'ruby-5')
+	buildPersonalLaser('personal-laser-defense-equipment-2', apm.bob_rework.lib.tier.blue, 'sapphire-5')
 	--
-	buildExoskeleton('exoskeleton-equipment', apm.bob_rework.lib.tier.monel)
-	buildExoskeleton('exoskeleton-equipment-2', apm.bob_rework.lib.tier.aluminium)
-	buildExoskeleton('exoskeleton-equipment-3', apm.bob_rework.lib.tier.titanium)
+	buildExoskeleton('exoskeleton-equipment', apm.bob_rework.lib.tier.red)
+	buildExoskeleton('exoskeleton-equipment-2', apm.bob_rework.lib.tier.blue)
 	--
-	buildPersonalRoboport('personal-roboport-antenna-equipment', apm.bob_rework.lib.tier.monel, 1)
-	buildPersonalRoboport('personal-roboport-antenna-equipment-2', apm.bob_rework.lib.tier.steel, 2)
-	buildPersonalRoboport('personal-roboport-antenna-equipment-3', apm.bob_rework.lib.tier.aluminium, 3)
-	buildPersonalRoboport('personal-roboport-antenna-equipment-4', apm.bob_rework.lib.tier.titanium, 4)
+	buildPersonalRoboport('personal-roboport-equipment', apm.bob_rework.lib.tier.red, 1)
+	buildPersonalRoboport('personal-roboport-mk2-equipment', apm.bob_rework.lib.tier.blue, 2)
 	--
-	buildPersonalChargePad('personal-roboport-chargepad-equipment', 1)
-	buildPersonalChargePad('personal-roboport-chargepad-equipment-2', 2)
-	buildPersonalChargePad('personal-roboport-chargepad-equipment-3', 3)
-	buildPersonalChargePad('personal-roboport-chargepad-equipment-4', 4)
-	--
-	buildPersonalRoboport('personal-roboport-equipment', apm.bob_rework.lib.tier.monel, 1)
-	buildPersonalRoboport('personal-roboport-mk2-equipment', apm.bob_rework.lib.tier.steel, 2)
-	buildPersonalRoboport('personal-roboport-mk3-equipment', apm.bob_rework.lib.tier.aluminium, 3)
-	buildPersonalRoboport('personal-roboport-mk4-equipment', apm.bob_rework.lib.tier.titanium, 4)
-	--
-	buildNightvision('night-vision-equipment', apm.bob_rework.lib.tier.monel, apm.bob_rework.lib.entities.glass)
-	buildNightvision('night-vision-equipment-2', apm.bob_rework.lib.tier.aluminium, 'topaz-5')
-	buildNightvision('night-vision-equipment-3', apm.bob_rework.lib.tier.titanium, 'diamond-5')
+	buildNightvision('night-vision-equipment', apm.bob_rework.lib.tier.yellow, apm.bob_rework.lib.entities.glass)
 	--
 
 	updateWeapons()
@@ -727,28 +833,9 @@ local modify = function ()
 	buffStackSizeForArtillery('he-artillery-ammo-rampant-arsenal')
 	buffStackSizeForArtillery('incendiary-artillery-ammo-rampant-arsenal')
 	buffStackSizeForArtillery('nuclear-artillery-ammo-rampant-arsenal')
-
-	-- -- disable tech
-	-- apm.lib.utils.technology.delete('bob-fire-artillery-shells')
-	-- apm.lib.utils.technology.delete('bob-posion-artillery-shells')
-	-- apm.lib.utils.technology.delete('bob-explosive-artillery-shells')
-	-- apm.lib.utils.technology.delete('bob-distractor-artillery-shells')
-	-- apm.lib.utils.technology.delete('bob-plasma-bullets')
-	-- apm.lib.utils.technology.delete('bob-plasma-rocket')
-	-- apm.lib.utils.technology.delete('bob-electric-bullets')
-	-- apm.lib.utils.technology.delete('bob-electric-rocket')
-	-- apm.lib.utils.technology.delete('bob-shotgun-electric-shells')
-	-- apm.lib.utils.technology.delete('bob-shotgun-plasma-shells')
-	-- apm.lib.utils.technology.delete('bob-shotgun-plasma-shells')
-	-- apm.lib.utils.technology.delete('bob-plasma-turrets-1')
-    -- --
-    
-	-- genSniperTurrets()
 end
 
-apm.bob_rework.lib.override.combat = function ()
-    drop()
-    modify()
+apm.bob_rework.lib.override.combat = function()
+	drop()
+	modify()
 end
-
--- apm.bob_rework.lib.override.combat()

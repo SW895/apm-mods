@@ -1,6 +1,10 @@
 {
     "name": "apm_bob_rework_ldinc",
+<<<<<<< Updated upstream
     "version": "0.22.54",
+=======
+    "version": "0.22.62",
+>>>>>>> Stashed changes
     "title": "APM bob's extra compability",
     "author": "ldinc",
     "dependencies": [
